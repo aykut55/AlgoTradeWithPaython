@@ -3,35 +3,8 @@ import numpy as np
 import os
 from datetime import datetime
 from typing import Tuple, Optional
+from src.data_management.data_manager import DataManager
 
-
-def readSecurityData(data_dir: str, subdir: str, filename: str) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series, pd.Series, pd.Series, int]:
-    """
-    Reads security data from CSV file and returns OHLCV data as pandas Series
-    
-    Args:
-        data_dir: Base data directory (e.g., "algorithmic_trading\\data")
-        subdir: Subdirectory (e.g., "01")
-        filename: CSV filename (e.g., "BTCUSD.csv")
-        
-    Returns:
-        Tuple of (Open, High, Low, Close, Volume, Lot, BarCount)
-    """
-    file_path = os.path.join(data_dir, subdir, filename)
-    
-    # Read CSV file (limit to first 10000 rows for testing)
-    df = pd.read_csv(file_path, nrows=10000)
-    
-    # Extract series
-    Open = pd.Series(df['open'].values)
-    High = pd.Series(df['high'].values)
-    Low = pd.Series(df['low'].values)
-    Close = pd.Series(df['close'].values)
-    Volume = pd.Series(df['volume'].values)
-    Lot = pd.Series(df['trades'].values)  # Using trades as Lot equivalent
-    BarCount = len(df)
-    
-    return Open, High, Low, Close, Volume, Lot, BarCount
 
 
 class IndicatorManager:
@@ -40,23 +13,53 @@ class IndicatorManager:
     def __init__(self):
         pass
     
-    def MA(self, data: pd.Series, method: str, period: int) -> pd.Series:
+    def MA(self, data: np.ndarray, method: str, period: int) -> np.ndarray:
         """Calculate Moving Average"""
         if method == "SMA":
-            return data.rolling(window=period).mean()
+            return self._sma(data, period)
         elif method == "EMA":
-            return data.ewm(span=period).mean()
+            return self._ema(data, period)
         else:
-            return data.rolling(window=period).mean()  # Default to SMA
+            return self._sma(data, period)  # Default to SMA
     
-    def RSI(self, data: pd.Series, period: int = 14) -> pd.Series:
-        """Calculate RSI"""
-        delta = data.diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
-        return rsi
+    def _sma(self, data: np.ndarray, period: int) -> np.ndarray:
+        """Simple Moving Average using numpy"""
+        result = np.full_like(data, np.nan)
+        for i in range(period - 1, len(data)):
+            result[i] = np.mean(data[i - period + 1:i + 1])
+        return result
+    
+    def _ema(self, data: np.ndarray, period: int) -> np.ndarray:
+        """Exponential Moving Average using numpy"""
+        alpha = 2.0 / (period + 1.0)
+        result = np.full_like(data, np.nan)
+        result[0] = data[0]
+        for i in range(1, len(data)):
+            if not np.isnan(result[i-1]):
+                result[i] = alpha * data[i] + (1 - alpha) * result[i-1]
+            else:
+                result[i] = data[i]
+        return result
+    
+    def RSI(self, data: np.ndarray, period: int = 14) -> np.ndarray:
+        """Calculate RSI using numpy"""
+        delta = np.diff(data, prepend=np.nan)
+        gains = np.where(delta > 0, delta, 0)
+        losses = np.where(delta < 0, -delta, 0)
+        
+        result = np.full_like(data, np.nan)
+        
+        for i in range(period, len(data)):
+            avg_gain = np.mean(gains[i - period + 1:i + 1])
+            avg_loss = np.mean(losses[i - period + 1:i + 1])
+            
+            if avg_loss == 0:
+                result[i] = 100
+            else:
+                rs = avg_gain / avg_loss
+                result[i] = 100 - (100 / (1 + rs))
+        
+        return result
 
 
 class Utils:
@@ -65,19 +68,17 @@ class Utils:
     def __init__(self):
         pass
     
-    def YukariKesti(self, i: int, series1: pd.Series, series2: pd.Series) -> bool:
+    def YukariKesti(self, i: int, series1: np.ndarray, series2: np.ndarray) -> bool:
         """Check if series1 crosses above series2"""
-        if i < 1:
+        if i < 1 or i >= len(series1) or i >= len(series2):
             return False
-        return (series1.iloc[i-1] <= series2.iloc[i-1] and 
-                series1.iloc[i] > series2.iloc[i])
+        return (series1[i-1] <= series2[i-1] and series1[i] > series2[i])
     
-    def AsagiKesti(self, i: int, series1: pd.Series, series2: pd.Series) -> bool:
+    def AsagiKesti(self, i: int, series1: np.ndarray, series2: np.ndarray) -> bool:
         """Check if series1 crosses below series2"""
-        if i < 1:
+        if i < 1 or i >= len(series1) or i >= len(series2):
             return False
-        return (series1.iloc[i-1] >= series2.iloc[i-1] and 
-                series1.iloc[i] < series2.iloc[i])
+        return (series1[i-1] >= series2[i-1] and series1[i] < series2[i])
 
 
 class KarAlZararKes:
@@ -235,8 +236,43 @@ class SystemWrapper:
 # --------------------------------------------------------------
 # Read market data (equivalent to Sistem.GrafikVerileri operations)
 print("Loading market data...")
-Open, High, Low, Close, Volume, Lot, BarCount = readSecurityData("data", "01", "BTCUSD.csv")
-print(f"Loaded {BarCount} bars of data")
+
+dataManager = DataManager()
+
+dataManager.set_read_mode_last_n(1000)  # Son 2000 satırı okumaya ayarla
+dataManager.load_prices_from_csv("data", "01", "BTCUSD.csv")
+
+Df         = dataManager.get_dataframe()
+Time       = dataManager.get_epoch_time_array()
+Open       = dataManager.get_open_array()
+High       = dataManager.get_high_array()
+Low        = dataManager.get_low_array()
+Close      = dataManager.get_close_array()
+Volume     = dataManager.get_volume_array()
+Lot        = dataManager.get_lot_array()
+BarCount   = dataManager.get_bar_count()
+ItemsCount = dataManager.get_items_count()
+dataManager.add_time_columns()
+
+print("========================")
+print("BarCount    :", BarCount)
+print("ItemsCount  :", ItemsCount)
+
+print("InputTime   :", dataManager.get_timestamp_array()[-5:])
+print("EpochTime   :", dataManager.get_epoch_time_array()[-5:])
+
+print("DateTime    :", dataManager.get_date_time_array_as_str()[-5:])
+print("Date        :", dataManager.get_date_array_as_str()[-5:])
+print("Time        :", dataManager.get_time_array_as_str()[-5:])
+
+print("Open        :", dataManager.get_open_array()[-5:])
+print("High        :", dataManager.get_high_array()[-5:])
+print("Low         :", dataManager.get_low_array()[-5:])
+print("Close       :", dataManager.get_close_array()[-5:])
+print("Volume      :", dataManager.get_volume_array()[-5:])
+print("Lot         :", dataManager.get_lot_array()[-5:])
+print("========================")
+
 
 # --------------------------------------------------------------
 # Initialize system components (equivalent to Lib.Get* methods)
@@ -313,8 +349,9 @@ for i in range(BarCount):
     Sat = myUtils.AsagiKesti(i, MA1, MA2)
     
     # Additional RSI-based signals
-    Al = Al or myUtils.YukariKesti(i, Rsi, pd.Series([50] * len(Rsi)))
-    Sat = Sat or myUtils.AsagiKesti(i, Rsi, pd.Series([50] * len(Rsi)))
+    rsi_50_line = np.full(len(Rsi), 50.0)
+    Al = Al or myUtils.YukariKesti(i, Rsi, rsi_50_line)
+    Sat = Sat or myUtils.AsagiKesti(i, Rsi, rsi_50_line)
     
     # Calculate take profit and stop loss
     KarAl = mySystem.GetTrader().KarAlZararKes.SonFiyataGoreKarAlSeviyeHesapla(i, 5, 50, 1000) != 0
@@ -357,3 +394,6 @@ k = 0
 del mySystem
 
 print("Main execution completed successfully!")
+
+# Show timing report
+dataManager.reportTimes()

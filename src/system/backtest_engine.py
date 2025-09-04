@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 
-from .system_wrapper import CSystemWrapper, SystemConfiguration, ExecutionMode
+from .system_wrapper import SystemWrapper, SystemConfiguration, ExecutionMode
 from ..core.base import SystemProtocol
 
 
@@ -175,7 +175,7 @@ class CBacktestEngine:
     - Result reporting and visualization
     """
     
-    def __init__(self, system_wrapper: CSystemWrapper):
+    def __init__(self, system_wrapper: SystemWrapper):
         """
         Initialize backtest engine.
         
@@ -187,7 +187,7 @@ class CBacktestEngine:
         
     def run_backtest(self, system: SystemProtocol, 
                     config: BacktestConfiguration,
-                    strategy_function: Callable[[SystemProtocol, CSystemWrapper, int], None]) -> BacktestResults:
+                    strategy_function: Callable[[SystemProtocol, SystemWrapper, int], None]) -> BacktestResults:
         """
         Run complete backtest.
         

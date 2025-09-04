@@ -4,6 +4,9 @@ import os
 from datetime import datetime
 from typing import Tuple, Optional
 from src.data_management.data_manager import DataManager
+from src.trading.trader import CTrader
+from src.trading.signals import CSignals
+from src.system.system_wrapper import SystemWrapper
 
 
 
@@ -81,71 +84,11 @@ class Utils:
         return (series1[i-1] >= series2[i-1] and series1[i] < series2[i])
 
 
-class KarAlZararKes:
-    """Take profit and stop loss management"""
+class SystemWrapper_sil:
+    """Python equivalent of C# SystemWrapper class - OLD VERSION TO BE REMOVED"""
     
     def __init__(self):
-        pass
-    
-    def SonFiyataGoreKarAlSeviyeHesapla(self, i: int, param1: float, param2: float, param3: float) -> float:
-        """Calculate take profit level based on last price"""
-        # Simplified implementation
-        return param1 if param1 > 0 else 0
-    
-    def SonFiyataGoreZararKesSeviyeHesapla(self, i: int, param1: float, param2: float, param3: float) -> float:
-        """Calculate stop loss level based on last price"""
-        # Simplified implementation
-        return param1 if param1 < 0 else 0
-
-
-class Signals:
-    """Trading signals configuration"""
-    
-    def __init__(self):
-        self.KarAlEnabled = False
-        self.ZararKesEnabled = False
-        self.GunSonuPozKapatEnabled = False
-        self.TimeFilteringEnabled = True
-
-
-class Trader:
-    """Python equivalent of C# Trader class"""
-    
-    def __init__(self):
-        self.Signals = Signals()
-        self.KarAlZararKes = KarAlZararKes()
-        self.position = "FLAT"  # "LONG", "SHORT", "FLAT"
-        self.datetime_start = None
-        self.datetime_end = None
-    
-    def ResetDateTimes(self):
-        """Reset trading time filters"""
-        self.datetime_start = None
-        self.datetime_end = None
-    
-    def SetDateTimes(self, start_datetime: str, end_datetime: str):
-        """Set trading time filters"""
-        self.datetime_start = start_datetime
-        self.datetime_end = end_datetime
-    
-    def IsSonYonA(self) -> bool:
-        """Check if last direction was buy"""
-        return self.position == "LONG"
-    
-    def IsSonYonS(self) -> bool:
-        """Check if last direction was sell"""
-        return self.position == "SHORT"
-    
-    def IsSonYonF(self) -> bool:
-        """Check if last direction was flat"""
-        return self.position == "FLAT"
-
-
-class SystemWrapper:
-    """Python equivalent of C# SystemWrapper class"""
-    
-    def __init__(self):
-        self.trader = Trader()
+        self.trader = CTrader()
         self.results = []
         # timing bilgisi
         self._timing_report = {}
@@ -316,36 +259,36 @@ class SystemWrapper:
             # Trading signals initialization (equivalent to C# version)
             if hasattr(self, 'myTrader') and self.myTrader:
                 # Main control signals (marked in C# with <<--------------) 
-                self.myTrader.Signals.KarAlEnabled = False
-                self.myTrader.Signals.ZararKesEnabled = False
-                self.myTrader.Signals.GunSonuPozKapatEnabled = False
-                self.myTrader.Signals.TimeFilteringEnabled = False
+                self.myTrader.signals.kar_al_enabled = False
+                self.myTrader.signals.zarar_kes_enabled = False
+                self.myTrader.signals.gun_sonu_poz_kapat_enabled = False
+                self.myTrader.signals.time_filtering_enabled = False
                 
                 # State tracking signals
-                if not hasattr(self.myTrader.Signals, 'KarAlindi'):
-                    self.myTrader.Signals.KarAlindi = False
-                if not hasattr(self.myTrader.Signals, 'ZararKesildi'):
-                    self.myTrader.Signals.ZararKesildi = False
-                if not hasattr(self.myTrader.Signals, 'FlatOlundu'):
-                    self.myTrader.Signals.FlatOlundu = False
-                if not hasattr(self.myTrader.Signals, 'PozAcilabilir'):
-                    self.myTrader.Signals.PozAcilabilir = False
-                if not hasattr(self.myTrader.Signals, 'PozAcildi'):
-                    self.myTrader.Signals.PozAcildi = False
-                if not hasattr(self.myTrader.Signals, 'PozKapatilabilir'):
-                    self.myTrader.Signals.PozKapatilabilir = False
-                if not hasattr(self.myTrader.Signals, 'PozKapatildi'):
-                    self.myTrader.Signals.PozKapatildi = False
-                if not hasattr(self.myTrader.Signals, 'PozAcilabilirAlis'):
-                    self.myTrader.Signals.PozAcilabilirAlis = False
-                if not hasattr(self.myTrader.Signals, 'PozAcilabilirSatis'):
-                    self.myTrader.Signals.PozAcilabilirSatis = False
-                if not hasattr(self.myTrader.Signals, 'PozAcildiAlis'):
-                    self.myTrader.Signals.PozAcildiAlis = False
-                if not hasattr(self.myTrader.Signals, 'PozAcildiSatis'):
-                    self.myTrader.Signals.PozAcildiSatis = False
-                if not hasattr(self.myTrader.Signals, 'GunSonuPozKapatildi'):
-                    self.myTrader.Signals.GunSonuPozKapatildi = False
+                if not hasattr(self.myTrader.signals, 'kar_alindi'):
+                    self.myTrader.signals.kar_alindi = False
+                if not hasattr(self.myTrader.signals, 'zarar_kesildi'):
+                    self.myTrader.signals.zarar_kesildi = False
+                if not hasattr(self.myTrader.signals, 'flat_olundu'):
+                    self.myTrader.signals.flat_olundu = False
+                if not hasattr(self.myTrader.signals, 'poz_acilabilir'):
+                    self.myTrader.signals.poz_acilabilir = False
+                if not hasattr(self.myTrader.signals, 'poz_acildi'):
+                    self.myTrader.signals.poz_acildi = False
+                if not hasattr(self.myTrader.signals, 'poz_kapatilabilir'):
+                    self.myTrader.signals.poz_kapatilabilir = False
+                if not hasattr(self.myTrader.signals, 'poz_kapatildi'):
+                    self.myTrader.signals.poz_kapatildi = False
+                if not hasattr(self.myTrader.signals, 'poz_acilabilir_alis'):
+                    self.myTrader.signals.poz_acilabilir_alis = False
+                if not hasattr(self.myTrader.signals, 'poz_acilabilir_satis'):
+                    self.myTrader.signals.poz_acilabilir_satis = False
+                if not hasattr(self.myTrader.signals, 'poz_acildi_alis'):
+                    self.myTrader.signals.poz_acildi_alis = False
+                if not hasattr(self.myTrader.signals, 'poz_acildi_satis'):
+                    self.myTrader.signals.poz_acildi_satis = False
+                if not hasattr(self.myTrader.signals, 'gun_sonu_poz_kapatildi'):
+                    self.myTrader.signals.gun_sonu_poz_kapatildi = False
             
             # Default strategy parameters
             self.Parametreler = ["SMA", 20, 50]  # Method, Period1, Period2
@@ -399,9 +342,72 @@ class SystemWrapper:
             self.trader.position = "FLAT"
             print(f"Bar {i}: FLAT signal executed")
     
-    def IslemZamanFiltresiUygula(self, i: int):
-        """Apply time filtering"""
-        pass
+    def IslemZamanFiltresiUygula(self, sistem=None, bar_index: int = 0, filter_mode: int = 3):
+        """
+        Apply time filtering - Python equivalent of C# SystemWrapper IslemZamanFiltresiUygula method.
+        
+        This method modifies the trading signal variables (Al, Sat, FlatOl) based on time filtering.
+        It calls the CTrader method to get filtering results and applies them to signals.
+        
+        Args:
+            sistem: System interface (for compatibility)
+            bar_index: Current bar index 
+            filter_mode: Filter mode (default 3 - DateTime range)
+        """
+        use_time_filtering = self.trader.signals.time_filtering_enabled if hasattr(self.trader.signals, 'time_filtering_enabled') else False
+        
+        if use_time_filtering:
+            # Get filtering results from CTrader
+            is_trade_enabled, is_poz_kapat_enabled, check_result = self.trader.IslemZamanFiltresiUygula(sistem, bar_index, filter_mode)
+            
+            # Access the current signal values that were set by EmirleriSetle
+            # These would normally be passed by reference in C# but we'll access them from trader signals
+            al = self.trader.signals.al if hasattr(self.trader.signals, 'al') else False
+            sat = self.trader.signals.sat if hasattr(self.trader.signals, 'sat') else False
+            flat_ol = self.trader.signals.flat_ol if hasattr(self.trader.signals, 'flat_ol') else False
+            
+            # Modify signals based on time filtering results
+            if not is_trade_enabled:
+                self.trader.signals.al = False  # Al = false
+                self.trader.signals.sat = False  # Sat = false
+                
+            if is_poz_kapat_enabled:
+                self.trader.signals.flat_ol = True  # FlatOl = true
+    
+    def IslemZamanFiltresiUygula_with_refs(self, sistem=None, bar_index: int = 0, 
+                                          al_ref: list = None, sat_ref: list = None, flat_ol_ref: list = None,
+                                          pas_gec_ref: list = None, kar_al_ref: list = None, zarar_kes_ref: list = None,
+                                          filter_mode: int = 3):
+        """
+        Apply time filtering with reference parameters - Python equivalent of C# overloaded method.
+        
+        This version takes signal variables by reference (using lists as mutable containers)
+        and modifies them based on time filtering results.
+        
+        Args:
+            sistem: System interface
+            bar_index: Current bar index
+            al_ref: Buy signal reference (list with one element)
+            sat_ref: Sell signal reference (list with one element) 
+            flat_ol_ref: Flatten signal reference (list with one element)
+            pas_gec_ref: Pass signal reference (list with one element)
+            kar_al_ref: Take profit signal reference (list with one element)
+            zarar_kes_ref: Stop loss signal reference (list with one element)
+            filter_mode: Filter mode (default 3)
+        """
+        use_time_filtering = self.trader.signals.time_filtering_enabled if hasattr(self.trader.signals, 'time_filtering_enabled') else False
+        
+        if use_time_filtering:
+            # Get filtering results from CTrader
+            is_trade_enabled, is_poz_kapat_enabled, check_result = self.trader.IslemZamanFiltresiUygula(sistem, bar_index, filter_mode)
+            
+            # Modify signal references based on time filtering results
+            if not is_trade_enabled:
+                if al_ref: al_ref[0] = False
+                if sat_ref: sat_ref[0] = False
+                
+            if is_poz_kapat_enabled:
+                if flat_ol_ref: flat_ol_ref[0] = True
     
     def EmirSonrasiDonguFoksiyonlariniCalistir(self, i: int):
         """Execute post-order loop functions"""
@@ -538,10 +544,10 @@ mySystem.GetTrader().SetDateTimes(DateTimes[0], DateTimes[1])
 
 # --------------------------------------------------------------
 # Configure trading signals
-mySystem.GetTrader().Signals.KarAlEnabled = False
-mySystem.GetTrader().Signals.ZararKesEnabled = False
-mySystem.GetTrader().Signals.GunSonuPozKapatEnabled = False
-mySystem.GetTrader().Signals.TimeFilteringEnabled = True
+mySystem.GetTrader().signals.kar_al_enabled = False
+mySystem.GetTrader().signals.zarar_kes_enabled = False
+mySystem.GetTrader().signals.gun_sonu_poz_kapat_enabled = False
+mySystem.GetTrader().signals.time_filtering_enabled = True
 
 # --------------------------------------------------------------
 # Main trading loop
@@ -581,18 +587,18 @@ for i in range(BarCount):
     ZararKes = mySystem.GetTrader().KarAlZararKes.SonFiyataGoreZararKesSeviyeHesapla(i, -1, -10, 1000) != 0
     
     # Apply signal enablers
-    KarAl = KarAl if mySystem.GetTrader().Signals.KarAlEnabled else False
-    ZararKes = ZararKes if mySystem.GetTrader().Signals.ZararKesEnabled else False
+    KarAl = KarAl if mySystem.GetTrader().signals.kar_al_enabled else False
+    ZararKes = ZararKes if mySystem.GetTrader().signals.zarar_kes_enabled else False
     
     # Get position status
     IsSonYonA = mySystem.GetTrader().IsSonYonA()
     IsSonYonS = mySystem.GetTrader().IsSonYonS()
     IsSonYonF = mySystem.GetTrader().IsSonYonF()
     
-    useTimeFiltering = mySystem.GetTrader().Signals.TimeFilteringEnabled
+    useTimeFiltering = mySystem.GetTrader().signals.time_filtering_enabled
     
     # Set orders (order is important)
-    mySystem.EmirleriSetle(i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+    mySystem.GetTrader().EmirleriSetle(None, i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
     
     # Apply time filtering
     mySystem.IslemZamanFiltresiUygula(i)

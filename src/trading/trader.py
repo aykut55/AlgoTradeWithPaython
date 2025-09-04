@@ -5,16 +5,30 @@ This module contains the CTrader class which manages the trading operations,
 position management, order execution, and integration with signals and indicators.
 """
 
+# Check if running as script
+if __name__ == "__main__":
+    print("Error: This module should be imported, not run directly.")
+    print("Use: from src.trading.trader import CTrader")
+    print("Or run: python main.py")
+    exit(1)
+
 from typing import Optional, Dict, Any, List, Protocol, Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 import numpy as np
 
-from ..core.base import CBase, SystemProtocol
-from ..utils.utils import CUtils
-from ..indicators.indicator_manager import CIndicatorManager
-from .signals import CSignals, Direction, SignalType, SignalInfo
+try:
+    from ..core.base import CBase, SystemProtocol
+    from ..utils.utils import CUtils
+    from ..indicators.indicator_manager import CIndicatorManager
+    from .signals import CSignals, Direction, SignalType, SignalInfo
+except ImportError as e:
+    # This happens when running the file directly
+    if __name__ == "__main__":
+        pass  # Already handled above
+    else:
+        raise e
 
 
 class OrderType(Enum):
@@ -128,6 +142,11 @@ class CTrader(CBase):
         self.utils = CUtils()
         self.indicators: Optional[CIndicatorManager] = None
         
+        # Import kar_al_zarar_kes after avoiding circular import
+        from .kar_al_zarar_kes import CKarAlZararKes
+        self.kar_al_zarar_kes = CKarAlZararKes()
+        self.kar_al_zarar_kes.initialize(None, self)
+        
         # Trading state
         self.is_initialized: bool = False
         self.current_bar: int = 0
@@ -155,6 +174,9 @@ class CTrader(CBase):
         # Position tracking
         self.current_position_size: float = 0.0
         self.average_entry_price: float = 0.0
+        
+        # Position checking methods (compatibility with main.py)
+        self.position = "FLAT"  # Simple position tracking for compatibility
         
         # Event callbacks
         self.on_signal_generated: Optional[Callable[[SignalInfo], None]] = None
@@ -582,6 +604,523 @@ class CTrader(CBase):
         """Reset daily statistics (call at start of new trading day)."""
         self.daily_pnl = 0.0
     
+    def ResetDateTimes(self, sistem=None):
+        """Reset date times - Python equivalent of C# ResetDateTimes"""
+        from datetime import datetime
+        
+        use_last_bar_datetime = True
+        
+        # V array equivalent - assuming we have access to bar data
+        if hasattr(self, '_bar_data') and self._bar_data is not None and len(self._bar_data) > 0:
+            self.StartDateTime = self._bar_data[0].get('date', datetime.now())
+            if use_last_bar_datetime and hasattr(sistem, 'BarSayisi'):
+                self.StopDateTime = self._bar_data[sistem.BarSayisi - 1].get('date', datetime.now())
+            else:
+                self.StopDateTime = datetime.now()
+        else:
+            # Default to current time if no data available
+            self.StartDateTime = datetime.now()
+            self.StopDateTime = datetime.now()
+        
+        # Set date and time components
+        self.StartDate = self.StartDateTime.date()
+        self.StopDate = self.StopDateTime.date()
+        self.StartTime = self.StartDateTime.time()
+        self.StopTime = self.StopDateTime.time()
+        
+        # String formats
+        datetime_format = "%Y.%m.%d %H:%M:%S"
+        date_format = "%Y.%m.%d"
+        time_format = "%H:%M:%S"
+        
+        self.StartDateTimeStr = self.StartDateTime.strftime(datetime_format)
+        self.StopDateTimeStr = self.StopDateTime.strftime(datetime_format)
+        self.StartDateStr = self.StartDate.strftime(date_format)
+        self.StopDateStr = self.StopDate.strftime(date_format)
+        self.StartTimeStr = self.StartTime.strftime(time_format)
+        self.StopTimeStr = self.StopTime.strftime(time_format)
+        
+        return self
+    
+    def SetDateTimes(self, *args):
+        """Set date times - Python equivalent of C# SetDateTimes (overloaded)"""
+        from datetime import datetime
+        
+        # Handle different argument patterns
+        if len(args) == 2:
+            # SetDateTimes(StartDateTime, StopDateTime)
+            start_datetime, stop_datetime = args
+            return self._set_date_times_simple(start_datetime, stop_datetime)
+        elif len(args) == 3 and args[0] is not None:
+            # SetDateTimes(sistem, StartDateTime, StopDateTime) - with sistem parameter
+            sistem, start_datetime, stop_datetime = args
+            return self._set_date_times_simple(start_datetime, stop_datetime)
+        elif len(args) == 4:
+            # SetDateTimes(StartDate, StartTime, StopDate, StopTime)
+            start_date, start_time, stop_date, stop_time = args
+            return self._set_date_times_detailed(start_date, start_time, stop_date, stop_time)
+        elif len(args) == 5:
+            # SetDateTimes(sistem, StartDate, StartTime, StopDate, StopTime)
+            sistem, start_date, start_time, stop_date, stop_time = args
+            return self._set_date_times_detailed(start_date, start_time, stop_date, stop_time)
+        else:
+            raise ValueError(f"Invalid number of arguments for SetDateTimes: {len(args)}")
+    
+    def _set_date_times_detailed(self, start_date: str, start_time: str, stop_date: str, stop_time: str):
+        """SetDateTimes with separate date and time parameters"""
+        from datetime import datetime
+        
+        date1 = start_date.strip()
+        time1 = start_time.strip()
+        date2 = stop_date.strip()
+        time2 = stop_time.strip()
+        datetime1 = date1 + " " + time1
+        datetime2 = date2 + " " + time2
+        suffix_date = "09:30:00"
+        prefix_time = "01.01.1900"
+        
+        # Parse date times (simplified TimeUtils.GetDateTime equivalent)
+        self.StartDateTime = self._parse_datetime(date1, time1)
+        self.StopDateTime = self._parse_datetime(date2, time2)
+        self.StartDate = self._parse_datetime(date1 + " " + suffix_date)
+        self.StopDate = self._parse_datetime(date2 + " " + suffix_date)
+        self.StartTime = self._parse_datetime(prefix_time + " " + time1)
+        self.StopTime = self._parse_datetime(prefix_time + " " + time2)
+        
+        # String formats
+        datetime_format = "%Y.%m.%d %H:%M:%S"
+        date_format = "%Y.%m.%d"
+        time_format = "%H:%M:%S"
+        
+        self.StartDateTimeStr = self.StartDateTime.strftime(datetime_format)
+        self.StopDateTimeStr = self.StopDateTime.strftime(datetime_format)
+        self.StartDateStr = self.StartDate.strftime(date_format)
+        self.StopDateStr = self.StopDate.strftime(date_format)
+        self.StartTimeStr = self.StartTime.strftime(time_format)
+        self.StopTimeStr = self.StopTime.strftime(time_format)
+        
+        return self
+    
+    def _set_date_times_simple(self, start_datetime: str, stop_datetime: str):
+        """SetDateTimes with datetime strings"""
+        from datetime import datetime
+        
+        datetime1 = start_datetime.strip()
+        datetime2 = stop_datetime.strip()
+        
+        # Extract date and time parts (assuming format: "dd.MM.yyyy HH:mm:ss")
+        if len(datetime1) >= 10:
+            date1 = datetime1[:10]
+            time1 = datetime1[11:] if len(datetime1) > 11 else "00:00:00"
+        else:
+            date1 = datetime1
+            time1 = "00:00:00"
+            
+        if len(datetime2) >= 10:
+            date2 = datetime2[:10]
+            time2 = datetime2[11:] if len(datetime2) > 11 else "00:00:00"
+        else:
+            date2 = datetime2
+            time2 = "00:00:00"
+            
+        suffix_date = "09:30:00"
+        prefix_time = "01.01.1900"
+        
+        # Parse date times
+        self.StartDateTime = self._parse_datetime(datetime1)
+        self.StopDateTime = self._parse_datetime(datetime2)
+        self.StartDate = self._parse_datetime(date1 + " " + suffix_date)
+        self.StopDate = self._parse_datetime(date2 + " " + suffix_date)
+        self.StartTime = self._parse_datetime(prefix_time + " " + time1)
+        self.StopTime = self._parse_datetime(prefix_time + " " + time2)
+        
+        # String formats
+        datetime_format = "%Y.%m.%d %H:%M:%S"
+        date_format = "%Y.%m.%d"
+        time_format = "%H:%M:%S"
+        
+        self.StartDateTimeStr = self.StartDateTime.strftime(datetime_format)
+        self.StopDateTimeStr = self.StopDateTime.strftime(datetime_format)
+        self.StartDateStr = self.StartDate.strftime(date_format)
+        self.StopDateStr = self.StopDate.strftime(date_format)
+        self.StartTimeStr = self.StartTime.strftime(time_format)
+        self.StopTimeStr = self.StopTime.strftime(time_format)
+        
+        return self
+    
+    def SetDateTime(self, *args):
+        """Set date time - Python equivalent of C# SetDateTime (overloaded)"""
+        from datetime import datetime
+        
+        if len(args) == 1:
+            # SetDateTime(StartDateTime)
+            start_datetime = args[0]
+            return self.SetDateTimes(start_datetime, datetime.now().strftime("%d.%m.%Y %H:%M:%S"))
+        elif len(args) == 2:
+            # SetDateTime(StartDate, StartTime) or SetDateTime(sistem, StartDateTime)
+            if ":" in args[1]:  # Second arg is time
+                start_date, start_time = args
+                start_datetime = start_date + " " + start_time
+                return self.SetDateTime(start_datetime)
+            else:  # Second arg is datetime string
+                sistem, start_datetime = args
+                return self.SetDateTimes(start_datetime, datetime.now().strftime("%d.%m.%Y %H:%M:%S"))
+        elif len(args) == 3:
+            # SetDateTime(sistem, StartDate, StartTime)
+            sistem, start_date, start_time = args
+            start_datetime = start_date + " " + start_time
+            return self.SetDateTime(start_datetime)
+        else:
+            raise ValueError(f"Invalid number of arguments for SetDateTime: {len(args)}")
+    
+    def _parse_datetime(self, *args):
+        """Parse datetime string(s) - simplified TimeUtils.GetDateTime equivalent"""
+        from datetime import datetime
+        
+        if len(args) == 1:
+            # Single datetime string
+            datetime_str = args[0]
+            # Try different formats commonly used
+            formats = [
+                "%d.%m.%Y %H:%M:%S",  # dd.MM.yyyy HH:mm:ss
+                "%Y.%m.%d %H:%M:%S",  # yyyy.MM.dd HH:mm:ss
+                "%d.%m.%Y",           # dd.MM.yyyy
+                "%Y.%m.%d",           # yyyy.MM.dd
+                "%H:%M:%S"            # HH:mm:ss
+            ]
+            
+            for fmt in formats:
+                try:
+                    return datetime.strptime(datetime_str, fmt)
+                except ValueError:
+                    continue
+            
+            # If no format matches, try default parsing
+            try:
+                return datetime.fromisoformat(datetime_str.replace('.', '-'))
+            except:
+                return datetime.now()
+                
+        elif len(args) == 2:
+            # Date and time strings
+            date_str, time_str = args
+            datetime_str = date_str + " " + time_str
+            return self._parse_datetime(datetime_str)
+        else:
+            return datetime.now()
+    
+    # Compatibility methods for main.py
+    def IsSonYonA(self) -> bool:
+        """Check if current position is long - compatibility method."""
+        return self.signals.is_son_yon_a()
+    
+    def IsSonYonS(self) -> bool:
+        """Check if current position is short - compatibility method."""
+        return self.signals.is_son_yon_s()
+    
+    def IsSonYonF(self) -> bool:
+        """Check if current position is flat - compatibility method."""
+        return self.signals.is_son_yon_f()
+    
+    # Compatibility method used in main.py for accessing KarAlZararKes
+    @property
+    def KarAlZararKes(self):
+        """Property to access kar_al_zarar_kes for compatibility with main.py."""
+        return self.kar_al_zarar_kes
+    
+    def SonFiyataGoreKarAlSeviyeHesapla(self, i: int, param1: float, param2: float, param3: float) -> float:
+        """Compatibility method for main.py KarAlZararKes calls."""
+        return self.kar_al_zarar_kes.son_fiyata_gore_kar_al_seviye_hesapla_range(None, i, int(param1), int(param2), int(param3))
+    
+    def SonFiyataGoreZararKesSeviyeHesapla(self, i: int, param1: float, param2: float, param3: float) -> float:
+        """Compatibility method for main.py KarAlZararKes calls."""
+        return self.kar_al_zarar_kes.son_fiyata_gore_zarar_kes_seviye_hesapla_range(None, i, int(param1), int(param2), int(param3))
+    
+    def EmirleriSetle(self, sistem=None, bar_index: int = 0, al: bool = False, sat: bool = False, 
+                      flat_ol: bool = False, pas_gec: bool = False, kar_al: bool = False, zarar_kes: bool = False) -> int:
+        """
+        Set trading orders - Python equivalent of C# EmirleriSetle method.
+        
+        Args:
+            sistem: System interface (for compatibility)
+            bar_index: Current bar index
+            al: Buy signal
+            sat: Sell signal
+            flat_ol: Flatten position signal (default False)
+            pas_gec: Pass signal (default False)
+            kar_al: Take profit signal (default False)
+            zarar_kes: Stop loss signal (default False)
+            
+        Returns:
+            int: Result status (0 for success)
+        """
+        result = 0
+        i = bar_index
+        
+        # Set signals in the signals object
+        self.signals.al = al
+        self.signals.sat = sat
+        self.signals.flat_ol = flat_ol
+        self.signals.pas_gec = pas_gec
+        self.signals.kar_al = kar_al
+        self.signals.zarar_kes = zarar_kes
+        
+        return result
+    
+    def IslemZamanFiltresiUygula(self, sistem=None, bar_index: int = 0, filter_mode: int = 0) -> tuple[bool, bool, int]:
+        """
+        Apply time filtering - Python equivalent of C# IslemZamanFiltresiUygula method.
+        
+        Args:
+            sistem: System interface (for compatibility)
+            bar_index: Current bar index
+            filter_mode: Filter mode (0-6)
+                0: No filtering (always enabled)
+                1: Time range filtering (startTime to stopTime)
+                2: Date range filtering (startDate to stopDate)
+                3: DateTime range filtering (startDateTime to stopDateTime)
+                4: Start time only filtering (from startTime onwards)
+                5: Start date only filtering (from startDate onwards)
+                6: Start datetime only filtering (from startDateTime onwards)
+                
+        Returns:
+            tuple[bool, bool, int]: (is_trade_enabled, is_poz_kapat_enabled, check_result)
+                check_result: -1 (before range), 0 (in range), 1 (after range)
+        """
+        from datetime import datetime
+        
+        i = bar_index
+        is_trade_enabled = False
+        is_poz_kapat_enabled = False
+        check_result = 0
+        
+        # Get bar datetime (placeholder - in real implementation this would come from V[i].Date)
+        bar_datetime = datetime.now()  # This should be replaced with actual bar datetime
+        
+        # Get datetime strings
+        start_date_time_str = getattr(self, 'StartDateTimeStr', '01.01.1900 00:00:00')
+        stop_date_time_str = getattr(self, 'StopDateTimeStr', '01.01.2100 23:59:59')
+        start_date_str = getattr(self, 'StartDateStr', '01.01.1900')
+        stop_date_str = getattr(self, 'StopDateStr', '01.01.2100')
+        start_time_str = getattr(self, 'StartTimeStr', '00:00:00')
+        stop_time_str = getattr(self, 'StopTimeStr', '23:59:59')
+        
+        now_date_time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        now_date = datetime.now().strftime("%d.%m.%Y")
+        now_time = datetime.now().strftime("%H:%M:%S")
+        
+        # Check if time filtering is enabled
+        use_time_filtering = self.signals.time_filtering_enabled if hasattr(self.signals, 'time_filtering_enabled') else False
+        
+        if use_time_filtering:
+            # Debug info for last bar (placeholder for Sistem.BarSayisi check)
+            if i == 999:  # Assuming last bar for debug
+                debug_info = f"""
+  {start_date_time_str}
+  {stop_date_time_str}
+  {start_date_str}
+  {stop_date_str}
+  {start_time_str}
+  {stop_time_str}
+  {now_date_time}
+  {now_date}
+  {now_time}
+  FilterMode = {filter_mode}
+  CTrader::IslemZamanFiltresiUygula
+"""
+                # In C# this would be Sistem.Mesaj(debug_info) - placeholder for message display
+                
+            if filter_mode == 0:
+                # No filtering - always enabled
+                is_trade_enabled = True
+                check_result = 0
+                
+            elif filter_mode == 1:
+                # Time range filtering (startTime to stopTime)
+                start_time_check = self._check_bar_time_with(sistema=sistem, bar_index=i, time_str=start_time_str)
+                stop_time_check = self._check_bar_time_with(sistema=sistem, bar_index=i, time_str=stop_time_str)
+                
+                if start_time_check >= 0 and stop_time_check < 0:
+                    is_trade_enabled = True
+                    check_result = 0
+                elif start_time_check < 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = -1
+                elif stop_time_check >= 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = 1
+                    
+            elif filter_mode == 2:
+                # Date range filtering (startDate to stopDate)
+                start_date_check = self._check_bar_date_with(sistema=sistem, bar_index=i, date_str=start_date_str)
+                stop_date_check = self._check_bar_date_with(sistema=sistem, bar_index=i, date_str=stop_date_str)
+                
+                if start_date_check >= 0 and stop_date_check < 0:
+                    is_trade_enabled = True
+                    check_result = 0
+                elif start_date_check < 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = -1
+                elif stop_date_check >= 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = 1
+                    
+            elif filter_mode == 3:
+                # DateTime range filtering (startDateTime to stopDateTime)
+                start_datetime_check = self._check_bar_datetime_with(sistema=sistem, bar_index=i, datetime_str=start_date_time_str)
+                stop_datetime_check = self._check_bar_datetime_with(sistema=sistem, bar_index=i, datetime_str=stop_date_time_str)
+                
+                if start_datetime_check >= 0 and stop_datetime_check < 0:
+                    is_trade_enabled = True
+                    check_result = 0
+                elif start_datetime_check < 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = -1
+                elif stop_datetime_check >= 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = 1
+                    
+            elif filter_mode == 4:
+                # Start time only filtering (from startTime onwards)
+                start_time_check = self._check_bar_time_with(sistema=sistem, bar_index=i, time_str=start_time_str)
+                
+                if start_time_check >= 0:
+                    is_trade_enabled = True
+                    check_result = 0
+                elif start_time_check < 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = -1
+                    
+            elif filter_mode == 5:
+                # Start date only filtering (from startDate onwards)
+                start_date_check = self._check_bar_date_with(sistema=sistem, bar_index=i, date_str=start_date_str)
+                
+                if start_date_check >= 0:
+                    is_trade_enabled = True
+                    check_result = 0
+                elif start_date_check < 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = -1
+                    
+            elif filter_mode == 6:
+                # Start datetime only filtering (from startDateTime onwards)
+                start_datetime_check = self._check_bar_datetime_with(sistema=sistem, bar_index=i, datetime_str=start_date_time_str)
+                
+                if start_datetime_check >= 0:
+                    is_trade_enabled = True
+                    check_result = 0
+                elif start_datetime_check < 0:
+                    if not self.IsSonYonF():
+                        is_poz_kapat_enabled = True
+                    check_result = -1
+        else:
+            # Time filtering disabled - always allow trading
+            is_trade_enabled = True
+            check_result = 0
+        
+        return is_trade_enabled, is_poz_kapat_enabled, check_result
+    
+    def _check_bar_time_with(self, sistema=None, bar_index: int = 0, time_str: str = "00:00:00") -> int:
+        """
+        Check bar time against reference time - placeholder for TimeUtils.CheckBarTimeWith.
+        
+        Args:
+            sistema: System interface
+            bar_index: Bar index
+            time_str: Time string to compare
+            
+        Returns:
+            int: -1 (before), 0 (equal), 1 (after)
+        """
+        # Placeholder implementation - in real system this would use TimeUtils
+        from datetime import datetime, time
+        
+        try:
+            # Parse reference time
+            ref_time = datetime.strptime(time_str, "%H:%M:%S").time()
+            
+            # Get current bar time (placeholder - should come from actual bar data)
+            current_time = datetime.now().time()
+            
+            if current_time < ref_time:
+                return -1
+            elif current_time == ref_time:
+                return 0
+            else:
+                return 1
+        except:
+            return 0
+    
+    def _check_bar_date_with(self, sistema=None, bar_index: int = 0, date_str: str = "01.01.1900") -> int:
+        """
+        Check bar date against reference date - placeholder for TimeUtils.CheckBarDateWith.
+        
+        Args:
+            sistema: System interface
+            bar_index: Bar index
+            date_str: Date string to compare
+            
+        Returns:
+            int: -1 (before), 0 (equal), 1 (after)
+        """
+        # Placeholder implementation - in real system this would use TimeUtils
+        from datetime import datetime
+        
+        try:
+            # Parse reference date
+            ref_date = datetime.strptime(date_str, "%d.%m.%Y").date()
+            
+            # Get current bar date (placeholder - should come from actual bar data)
+            current_date = datetime.now().date()
+            
+            if current_date < ref_date:
+                return -1
+            elif current_date == ref_date:
+                return 0
+            else:
+                return 1
+        except:
+            return 0
+    
+    def _check_bar_datetime_with(self, sistema=None, bar_index: int = 0, datetime_str: str = "01.01.1900 00:00:00") -> int:
+        """
+        Check bar datetime against reference datetime - placeholder for TimeUtils.CheckBarDateTimeWith.
+        
+        Args:
+            sistema: System interface
+            bar_index: Bar index
+            datetime_str: DateTime string to compare
+            
+        Returns:
+            int: -1 (before), 0 (equal), 1 (after)
+        """
+        # Placeholder implementation - in real system this would use TimeUtils
+        from datetime import datetime
+        
+        try:
+            # Parse reference datetime
+            ref_datetime = datetime.strptime(datetime_str, "%d.%m.%Y %H:%M:%S")
+            
+            # Get current bar datetime (placeholder - should come from actual bar data)
+            current_datetime = datetime.now()
+            
+            if current_datetime < ref_datetime:
+                return -1
+            elif current_datetime == ref_datetime:
+                return 0
+            else:
+                return 1
+        except:
+            return 0
+
     def __repr__(self) -> str:
         """String representation of trader."""
         position_info = self.get_position_info()

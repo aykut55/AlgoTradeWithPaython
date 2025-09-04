@@ -144,6 +144,13 @@ class CSignals:
         self.flat_olundu: bool = False  # Position flattened
         self.poz_acilabilir: bool = False  # Position can be opened
         self.poz_acildi: bool = False  # Position opened
+        self.poz_kapatilabilir: bool = False  # Position can be closed
+        self.poz_kapatildi: bool = False  # Position closed
+        self.poz_acilabilir_alis: bool = False  # Can open long position
+        self.poz_acilabilir_satis: bool = False  # Can open short position
+        self.poz_acildi_alis: bool = False  # Long position opened
+        self.poz_acildi_satis: bool = False  # Short position opened
+        self.gun_sonu_poz_kapatildi: bool = False  # End of day position closed
         
         # Signal history
         self.signal_history: list[SignalInfo] = []

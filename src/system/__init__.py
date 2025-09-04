@@ -12,7 +12,7 @@ from .system_wrapper import (
     SystemConfiguration,
     StrategySignals,
     ExecutionStatistics,
-    CSystemWrapper
+    SystemWrapper
 )
 
 from .backtest_engine import (
@@ -30,7 +30,7 @@ __all__ = [
     "SystemConfiguration",
     "StrategySignals",
     "ExecutionStatistics",
-    "CSystemWrapper",
+    "SystemWrapper",
     
     # Backtest Engine
     "BacktestMode",

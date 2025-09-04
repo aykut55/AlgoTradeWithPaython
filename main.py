@@ -147,13 +147,80 @@ class SystemWrapper:
     def __init__(self):
         self.trader = Trader()
         self.results = []
+        # timing bilgisi
+        self._timing_report = {}
+        # input parameters (equivalent to C# InputParams)
+        self.InputParamsCount = 10  # Default parameter count
+        self.InputParams = [""] * self.InputParamsCount
     
-    def CreateModules(self):
-        """Create system modules"""
-        return self
+    def CreateModules(self, dataManager=None, lib=None):
+        """Create system modules - Python equivalent of C# CreateModules"""
+        def _impl():
+            # Initialize modules similar to C# version
+            self.myVarlik = None  # Asset management (placeholder)
+            self.myTrader = self.trader  # Already created in __init__
+            self.myUtils = Utils()  # Utils class
+            self.myTimeUtils = None  # Time utilities (placeholder)
+            self.myBarUtils = None  # Bar utilities (placeholder)
+            self.myFileUtils = None  # File utilities (placeholder)
+            self.myExcelUtils = None  # Excel utilities (placeholder)
+            self.mySharedMemory = None  # Shared memory (placeholder)
+            self.myConfig = None  # Configuration (placeholder)
+            self.myIndicators = IndicatorManager()  # Indicator manager
+            self.myDataManager = dataManager  # Data manager
+            
+            return self
+        
+        return self._timeit("CreateModules", _impl)
     
-    def Initialize(self, V, Open, High, Low, Close, Volume, Lot):
-        """Initialize system with market data"""
+    def Initialize(self, sistem=None, V=None, Open=None, High=None, Low=None, Close=None, Volume=None, Lot=None):
+        """Initialize system with market data - Python equivalent of C# Initialize"""
+        def _impl():
+            # System properties (equivalent to C# version)
+            if sistem:
+                self.GrafikSembol = getattr(sistem, 'Sembol', 'BTCUSD')  # Default symbol
+                self.GrafikPeriyot = getattr(sistem, 'Periyot', '1D')    # Default period
+                self.SistemAdi = getattr(sistem, 'Name', 'TradingSystem') # Default name
+            else:
+                # Default values when no sistem object provided
+                self.GrafikSembol = 'BTCUSD'
+                self.GrafikPeriyot = '1D'
+                self.SistemAdi = 'PythonTradingSystem'
+            
+            # Set data (equivalent to SetData method)
+            self.SetData(sistem, V, Open, High, Low, Close, Volume, Lot)
+            
+            # Initialize modules (equivalent to C# module initialization)
+            if hasattr(self, 'myVarlik') and self.myVarlik:
+                # myVarlik.Initialize(sistem) - placeholder
+                pass
+                
+            if hasattr(self, 'myTrader') and self.myTrader:
+                # myTrader.Initialize(sistem, V, Open, High, Low, Close, Volume, Lot, myVarlik)
+                self.myTrader.position = "FLAT"  # Reset position
+                
+            if hasattr(self, 'myUtils') and self.myUtils:
+                # myUtils.Initialize(sistem) - placeholder
+                pass
+                
+            if hasattr(self, 'myTimeUtils') and self.myTimeUtils:
+                # myTimeUtils.Initialize(sistem, V, Open, High, Low, Close, Volume, Lot) - placeholder
+                pass
+                
+            if hasattr(self, 'myBarUtils') and self.myBarUtils:
+                # myBarUtils.Initialize(sistem, V, Open, High, Low, Close, Volume, Lot) - placeholder
+                pass
+                
+            if hasattr(self, 'myIndicators') and self.myIndicators:
+                # myIndicators.Initialize(sistem, V, Open, High, Low, Close, Volume, Lot) - placeholder
+                pass
+                
+            return self
+        
+        return self._timeit("Initialize", _impl)
+    
+    def SetData(self, sistem, V, Open, High, Low, Close, Volume, Lot):
+        """Set market data - equivalent to C# SetData method"""
         self.V = V
         self.Open = Open
         self.High = High
@@ -162,17 +229,147 @@ class SystemWrapper:
         self.Volume = Volume
         self.Lot = Lot
     
-    def Reset(self):
-        """Reset system state"""
-        pass
+    def Reset(self, sistem=None):
+        """Reset system state - Python equivalent of C# Reset"""
+        def _impl():
+            # Reset all modules (equivalent to C# module Reset calls)
+            if hasattr(self, 'myVarlik') and self.myVarlik:
+                # myVarlik.Reset(sistem) - placeholder
+                pass
+                
+            if hasattr(self, 'myTrader') and self.myTrader:
+                # myTrader.Reset(sistem)
+                self.myTrader.position = "FLAT"
+                self.myTrader.datetime_start = None
+                self.myTrader.datetime_end = None
+                
+            if hasattr(self, 'myUtils') and self.myUtils:
+                # myUtils.Reset(sistem) - placeholder
+                pass
+                
+            if hasattr(self, 'myTimeUtils') and self.myTimeUtils:
+                # myTimeUtils.Reset(sistem) - placeholder
+                pass
+                
+            if hasattr(self, 'myBarUtils') and self.myBarUtils:
+                # myBarUtils.Reset(sistem) - placeholder
+                pass
+                
+            if hasattr(self, 'myIndicators') and self.myIndicators:
+                # myIndicators.Reset(sistem) - placeholder
+                pass
+            
+            # Reset InputParams (equivalent to C# for loop)
+            for i in range(self.InputParamsCount):
+                self.InputParams[i] = ""
+            
+            # Reset other system properties
+            if hasattr(self, 'Parametreler'):
+                self.Parametreler = []
+            
+            # Clear results
+            self.results = []
+            
+            return self
+        
+        return self._timeit("Reset", _impl)
     
-    def InitializeParamsWithDefaults(self):
-        """Initialize parameters with defaults"""
-        self.Parametreler = ["SMA", 20, 50]  # Method, Period1, Period2
+    def InitializeParamsWithDefaults(self, sistem=None):
+        """Initialize parameters with defaults - Python equivalent of C# InitializeParamsWithDefaults"""
+        def _impl():
+            # Trading parameters (equivalent to C# version)
+            self.HisseSayisi = 0
+            self.KontratSayisi = 10
+            self.KomisyonCarpan = 0.0
+            self.VarlikAdedCarpani = 1
+            
+            # File paths (equivalent to C# version)
+            self.InputsDir = "Aykut/Exports/"
+            self.OutputsDir = "Aykut/Exports/"
+            sistem_adi = getattr(self, 'SistemAdi', 'PythonTradingSystem')
+            self.ParamsInputFileName = f"{self.InputsDir}{sistem_adi}_params.txt"
+            self.IstatistiklerOutputFileName = f"{self.OutputsDir}Istatistikler.csv"
+            self.IstatistiklerOptOutputFileName = f"{self.OutputsDir}IstatistiklerOpt.csv"
+            
+            # System flags (equivalent to C# version)
+            self.bUseParamsFromInputFile = False
+            self.bOptEnabled = False
+            self.bIdealGetiriHesapla = True
+            self.bIstatistikleriHesapla = True
+            self.bIstatistikleriEkranaYaz = True
+            self.bGetiriIstatistikleriEkranaYaz = True
+            self.bIstatistikleriDosyayaYaz = True
+            self.bOptimizasyonIstatistiklerininBasliklariniDosyayaYaz = False
+            self.bOptimizasyonIstatistikleriniDosyayaYaz = False
+            self.bSinyalleriEkranaCiz = True
+            
+            # Run control (equivalent to C# version)
+            self.CurrentRunIndex = 0
+            self.TotalRunCount = 1
+            
+            # Asset configuration (equivalent to C# Fx Ons Altin Micro setup)
+            if hasattr(self, 'myVarlik') and self.myVarlik:
+                # myVarlik.SetKontratParamsFxOnsAltinMicro(sistem, KontratSayisi=1, VarlikAdedCarpani=1)
+                # myVarlik.SetKomisyonParams(sistem, KomisyonCarpan=0.0)
+                pass  # placeholder
+            
+            # Trading signals initialization (equivalent to C# version)
+            if hasattr(self, 'myTrader') and self.myTrader:
+                # Main control signals (marked in C# with <<--------------) 
+                self.myTrader.Signals.KarAlEnabled = False
+                self.myTrader.Signals.ZararKesEnabled = False
+                self.myTrader.Signals.GunSonuPozKapatEnabled = False
+                self.myTrader.Signals.TimeFilteringEnabled = False
+                
+                # State tracking signals
+                if not hasattr(self.myTrader.Signals, 'KarAlindi'):
+                    self.myTrader.Signals.KarAlindi = False
+                if not hasattr(self.myTrader.Signals, 'ZararKesildi'):
+                    self.myTrader.Signals.ZararKesildi = False
+                if not hasattr(self.myTrader.Signals, 'FlatOlundu'):
+                    self.myTrader.Signals.FlatOlundu = False
+                if not hasattr(self.myTrader.Signals, 'PozAcilabilir'):
+                    self.myTrader.Signals.PozAcilabilir = False
+                if not hasattr(self.myTrader.Signals, 'PozAcildi'):
+                    self.myTrader.Signals.PozAcildi = False
+                if not hasattr(self.myTrader.Signals, 'PozKapatilabilir'):
+                    self.myTrader.Signals.PozKapatilabilir = False
+                if not hasattr(self.myTrader.Signals, 'PozKapatildi'):
+                    self.myTrader.Signals.PozKapatildi = False
+                if not hasattr(self.myTrader.Signals, 'PozAcilabilirAlis'):
+                    self.myTrader.Signals.PozAcilabilirAlis = False
+                if not hasattr(self.myTrader.Signals, 'PozAcilabilirSatis'):
+                    self.myTrader.Signals.PozAcilabilirSatis = False
+                if not hasattr(self.myTrader.Signals, 'PozAcildiAlis'):
+                    self.myTrader.Signals.PozAcildiAlis = False
+                if not hasattr(self.myTrader.Signals, 'PozAcildiSatis'):
+                    self.myTrader.Signals.PozAcildiSatis = False
+                if not hasattr(self.myTrader.Signals, 'GunSonuPozKapatildi'):
+                    self.myTrader.Signals.GunSonuPozKapatildi = False
+            
+            # Default strategy parameters
+            self.Parametreler = ["SMA", 20, 50]  # Method, Period1, Period2
+            
+            return self
+        
+        return self._timeit("InitializeParamsWithDefaults", _impl)
     
-    def SetParamsForSingleRun(self):
-        """Set parameters for single run"""
-        pass
+    def SetParamsForSingleRun(self, sistem=None, IdealGetiriHesapla=True, IstatistikleriHesapla=True,
+                              IstatistikleriEkranaYaz=True, GetiriIstatistikleriEkranaYaz=True, 
+                              IstatistikleriDosyayaYaz=True, SinyalleriEkranaCiz=True):
+        """Set parameters for single run - Python equivalent of C# SetParamsForSingleRun"""
+        def _impl():
+            # Set boolean flags for single run configuration (equivalent to C# version)
+            self.bIdealGetiriHesapla = IdealGetiriHesapla
+            self.bIstatistikleriHesapla = IstatistikleriHesapla
+            self.bIstatistikleriEkranaYaz = IstatistikleriEkranaYaz
+            self.bGetiriIstatistikleriEkranaYaz = GetiriIstatistikleriEkranaYaz
+            self.bIstatistikleriDosyayaYaz = IstatistikleriDosyayaYaz
+            self.bSinyalleriEkranaCiz = SinyalleriEkranaCiz
+            
+            return self
+        
+        return self._timeit("SetParamsForSingleRun", _impl)
     
     def GetTrader(self):
         """Get trader instance"""
@@ -216,7 +413,10 @@ class SystemWrapper:
     
     def HesaplamalariYap(self):
         """Perform calculations"""
-        print("Performing final calculations...")
+        def _impl():
+            print("Performing final calculations...")
+        
+        return self._timeit("HesaplamalariYap", _impl)
     
     def SonuclariEkrandaGoster(self):
         """Show results on screen"""
@@ -225,11 +425,34 @@ class SystemWrapper:
     
     def SonuclariDosyayaYaz(self):
         """Write results to file"""
-        with open("trading_results.txt", "w", encoding="utf-8") as f:
-            f.write("=== TRADING RESULTS ===\n")
-            f.write(f"Final position: {self.trader.position}\n")
-            f.write(f"Total bars processed: {len(self.Open) if hasattr(self, 'Open') else 'N/A'}\n")
-        print("Results written to trading_results.txt")
+        def _impl():
+            with open("trading_results.txt", "w", encoding="utf-8") as f:
+                f.write("=== TRADING RESULTS ===\n")
+                f.write(f"Final position: {self.trader.position}\n")
+                f.write(f"Total bars processed: {len(self.Open) if hasattr(self, 'Open') else 'N/A'}\n")
+            print("Results written to trading_results.txt")
+        
+        return self._timeit("SonuclariDosyayaYaz", _impl)
+    
+    # --------------------------------------------------------
+    # Timing utilities
+    def _timeit(self, name, func, *args, **kwargs):
+        """Genel zaman ölçer"""
+        import time
+        start = time.time()
+        result = func(*args, **kwargs)
+        elapsed = time.time() - start
+        self._timing_report[name] = elapsed
+        return result
+    
+    def reportTimes(self):
+        """Timer raporu"""
+        print("\n=== SystemWrapper Timing Report ===")
+        if not self._timing_report:
+            print("No timing data collected.")
+            return
+        for k, v in self._timing_report.items():
+            print(f"{k:25s}: {v:.6f} sec")
 
 
 # Main execution starts here
@@ -283,7 +506,7 @@ myUtils = Utils()
 # --------------------------------------------------------------
 # Initialize system
 V = None  # Placeholder for GrafikVerileri
-mySystem.CreateModules().Initialize(V, Open, High, Low, Close, Volume, Lot)
+mySystem.CreateModules(dataManager=dataManager).Initialize(V, Open, High, Low, Close, Volume, Lot)
 
 # --------------------------------------------------------------
 # System configuration
@@ -387,6 +610,11 @@ mySystem.SonuclariEkrandaGoster()
 mySystem.SonuclariDosyayaYaz()
 
 # --------------------------------------------------------------
+# Show timing reports
+dataManager.reportTimes()
+mySystem.reportTimes()
+
+# --------------------------------------------------------------
 k = 0
 
 # --------------------------------------------------------------
@@ -395,5 +623,3 @@ del mySystem
 
 print("Main execution completed successfully!")
 
-# Show timing report
-dataManager.reportTimes()

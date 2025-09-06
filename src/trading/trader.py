@@ -209,6 +209,30 @@ class CTrader(CBase):
         self.is_initialized = True
         self.show_message(system, f"CTrader '{self.name}' initialized with {self.bar_count} bars")
     
+    def Start(self, sistem=None) -> None:
+        """
+        Start trading system - Python equivalent of C# Start method.
+        
+        Args:
+            sistem: System interface (for compatibility with C# version)
+        """
+        if not self.is_initialized:
+            self.show_message(sistem, f"Warning: CTrader '{self.name}' not initialized before Start()")
+        
+        # Reset trading state for new session
+        self.current_bar = 0
+        self.current_price = 0.0
+        self.daily_pnl = 0.0
+        
+        # Clear pending orders from previous session
+        self.pending_orders.clear()
+        
+        # Initialize kar_al_zarar_kes if needed
+        if hasattr(self, 'kar_al_zarar_kes') and self.kar_al_zarar_kes:
+            self.kar_al_zarar_kes.reset()
+        
+        self.show_message(sistem, f"CTrader '{self.name}' started successfully")
+    
     def update_bar(self, system: SystemProtocol, bar_number: int) -> None:
         """
         Update current bar and process trading logic.

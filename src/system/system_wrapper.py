@@ -493,17 +493,105 @@ class SystemWrapper(CBase):
         """Get trader instance"""
         return self.trader
     
-    def Start(self):
-        """Start trading system"""
-        print("Trading system started...")
+    def Start(self, sistem=None):
+        """Start trading system - Python equivalent of C# Start method"""
+        def _impl():
+            # Initialize time utils if not already done
+            if not hasattr(self, 'myTimeUtils') or self.myTimeUtils is None:
+                from ..time_management.time_utils import CTimeUtils
+                self.myTimeUtils = CTimeUtils()
+            
+            # Start timer (equivalent to myTimeUtils.StartTimer(Sistem))
+            if hasattr(self.myTimeUtils, 'start_timing'):
+                self.myTimeUtils.start_timing()
+            
+            # Start trader (equivalent to myTrader.Start(Sistem))
+            if hasattr(self, 'myTrader') and self.myTrader:
+                if hasattr(self.myTrader, 'Start'):
+                    self.myTrader.Start(sistem)
+            
+            print("Trading system started...")
+        
+        return self._timeit("Start", _impl)
     
-    def EmirleriResetle(self, i: int):
-        """Reset orders for current bar"""
-        pass
+    def EmirleriResetle(self, sistem=None, bar_index: int = 0):
+        """Reset orders for current bar - Python equivalent of C# EmirleriResetle"""
+        # Reset all signal flags to False (equivalent to C# version)
+        self.Al = False
+        self.Sat = False
+        self.FlatOl = False
+        self.PasGec = False
+        self.KarAl = False
+        self.ZararKes = False
     
-    def EmirOncesiDonguFoksiyonlariniCalistir(self, i: int):
-        """Execute pre-order loop functions"""
-        pass
+    def EmirOncesiDonguFoksiyonlariniCalistir(self, sistem=None, bar_index: int = 0):
+        """Execute pre-order loop functions - Python equivalent of C# EmirOncesiDonguFoksiyonlariniCalistir"""
+        i = bar_index
+        
+        # Reset loop start variables
+        if hasattr(self, 'myTrader') and self.myTrader:
+            # myTrader.DonguBasiDegiskenleriResetle(Sistem, i)
+            if hasattr(self.myTrader, 'DonguBasiDegiskenleriResetle'):
+                self.myTrader.DonguBasiDegiskenleriResetle(sistem, i)
+            
+            # myTrader.DonguBasiDegiskenleriGuncelle(Sistem, i)
+            if hasattr(self.myTrader, 'DonguBasiDegiskenleriGuncelle'):
+                self.myTrader.DonguBasiDegiskenleriGuncelle(sistem, i)
+        
+        if i < 1:
+            return
+        
+        if hasattr(self, 'myTrader') and self.myTrader:
+            # myTrader.AnlikKarZararHesapla(Sistem, i)
+            if hasattr(self.myTrader, 'AnlikKarZararHesapla'):
+                self.myTrader.AnlikKarZararHesapla(sistem, i)
+            
+            # myTrader.EmirleriResetle(Sistem, i)
+            if hasattr(self.myTrader, 'EmirleriResetle'):
+                self.myTrader.EmirleriResetle(sistem, i)
+        
+        # New day detection (equivalent to V[i].Date.Day != V[i - 1].Date.Day)
+        is_yeni_gun = False
+        if hasattr(self, 'V') and self.V is not None and len(self.V) > i:
+            # Placeholder for actual date comparison - would need V data structure
+            pass
+        # if (is_yeni_gun) Sistem.DikeyCizgiEkle(i, Color.DimGray, 2, 2)
+        
+        # New hour detection (equivalent to V[i].Date.Hour != V[i - 1].Date.Hour)
+        is_yeni_saat = False
+        if hasattr(self, 'V') and self.V is not None and len(self.V) > i:
+            # Placeholder for actual hour comparison - would need V data structure
+            pass
+        # if (is_yeni_saat) Sistem.DikeyCizgiEkle(i, Color.DimGray, 2, 2)
+        
+        # Reset signal flags
+        if hasattr(self, 'myTrader') and self.myTrader and hasattr(self.myTrader, 'signals'):
+            signals = self.myTrader.signals
+            
+            # Reset GunSonuPozKapatildi flag
+            if hasattr(signals, 'gun_sonu_poz_kapatildi') and signals.gun_sonu_poz_kapatildi:
+                signals.gun_sonu_poz_kapatildi = False
+            
+            # Reset position-related flags
+            kar_alindi = getattr(signals, 'kar_alindi', False)
+            zarar_kesildi = getattr(signals, 'zarar_kesildi', False)
+            flat_olundu = getattr(signals, 'flat_olundu', False)
+            
+            if kar_alindi or zarar_kesildi or flat_olundu:
+                if hasattr(signals, 'kar_alindi'):
+                    signals.kar_alindi = False
+                if hasattr(signals, 'zarar_kesildi'):
+                    signals.zarar_kesildi = False
+                if hasattr(signals, 'flat_olundu'):
+                    signals.flat_olundu = False
+                if hasattr(signals, 'poz_acilabilir'):
+                    signals.poz_acilabilir = False
+            
+            # Enable position opening if it was disabled
+            if hasattr(signals, 'poz_acilabilir') and not signals.poz_acilabilir:
+                signals.poz_acilabilir = True
+                if hasattr(signals, 'poz_acildi'):
+                    signals.poz_acildi = False
     
     def EmirleriSetle(self, i: int, Al: bool, Sat: bool, FlatOl: bool, PasGec: bool, KarAl: bool, ZararKes: bool):
         """Set orders based on signals"""
@@ -549,17 +637,122 @@ class SystemWrapper(CBase):
             if is_poz_kapat_enabled:
                 self.trader.signals.flat_ol = True  # FlatOl = true
     
-    def EmirSonrasiDonguFoksiyonlariniCalistir(self, i: int):
-        """Execute post-order loop functions"""
-        pass
+    def EmirSonrasiDonguFoksiyonlariniCalistir(self, sistem=None, bar_index: int = 0):
+        """Execute post-order loop functions - Python equivalent of C# EmirSonrasiDonguFoksiyonlariniCalistir"""
+        i = bar_index
+        
+        # Commented out sections from C# version (for reference):
+        # KarAl = myTrader.KarAlZararKes.SonFiyataGoreKarAlSeviyeHesapla(Sistem, i, 5, 50, 1000) != 0 ? true : false;
+        # ZararKes = myTrader.KarAlZararKes.SonFiyataGoreZararKesSeviyeHesapla(Sistem, i, -1, -10, 1000) != 0 ? true : false;
+        # KarAl = myTrader.Signals.KarAlEnabled ? KarAl : false;
+        # ZararKes = myTrader.Signals.ZararKesEnabled ? ZararKes : false;
+        
+        if hasattr(self, 'myTrader') and self.myTrader:
+            # myTrader.EmirleriSetle(Sistem, i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+            if hasattr(self.myTrader, 'EmirleriSetle'):
+                # Get current signal values
+                Al = getattr(self, 'Al', False)
+                Sat = getattr(self, 'Sat', False) 
+                FlatOl = getattr(self, 'FlatOl', False)
+                PasGec = getattr(self, 'PasGec', False)
+                KarAl = getattr(self, 'KarAl', False)
+                ZararKes = getattr(self, 'ZararKes', False)
+                
+                self.myTrader.EmirleriSetle(sistem, i, Al, Sat, FlatOl, PasGec, KarAl, ZararKes)
+            
+            # myTrader.Signals.GunSonuPozKapatildi = myTrader.GunSonuPozKapat(Sistem, i, myTrader.Signals.GunSonuPozKapatEnabled)
+            if hasattr(self.myTrader, 'GunSonuPozKapat') and hasattr(self.myTrader, 'signals'):
+                gun_sonu_enabled = getattr(self.myTrader.signals, 'gun_sonu_poz_kapat_enabled', False)
+                gun_sonu_result = self.myTrader.GunSonuPozKapat(sistem, i, gun_sonu_enabled)
+                if hasattr(self.myTrader.signals, 'gun_sonu_poz_kapatildi'):
+                    self.myTrader.signals.gun_sonu_poz_kapatildi = gun_sonu_result
+            
+            # myTrader.EmirleriUygula(Sistem, i)
+            if hasattr(self.myTrader, 'EmirleriUygula'):
+                self.myTrader.EmirleriUygula(sistem, i)
+            
+            # Signal state tracking
+            if hasattr(self.myTrader, 'signals'):
+                signals = self.myTrader.signals
+                
+                # if (myTrader.Signals.KarAlindi == false && myTrader.Signals.KarAl) { myTrader.Signals.KarAlindi = true; }
+                kar_alindi = getattr(signals, 'kar_alindi', False)
+                kar_al = getattr(signals, 'kar_al', False)
+                if not kar_alindi and kar_al:
+                    signals.kar_alindi = True
+                
+                # if (myTrader.Signals.ZararKesildi == false && myTrader.Signals.ZararKes) { myTrader.Signals.ZararKesildi = true; }
+                zarar_kesildi = getattr(signals, 'zarar_kesildi', False)
+                zarar_kes = getattr(signals, 'zarar_kes', False)
+                if not zarar_kesildi and zarar_kes:
+                    signals.zarar_kesildi = True
+                
+                # if (myTrader.Signals.FlatOlundu == false && myTrader.Signals.FlatOl) { myTrader.Signals.FlatOlundu = true; }
+                flat_olundu = getattr(signals, 'flat_olundu', False)
+                flat_ol = getattr(signals, 'flat_ol', False)
+                if not flat_olundu and flat_ol:
+                    signals.flat_olundu = True
+            
+            # Update various lists (equivalent to C# version)
+            # myTrader.SistemYonListesiniGuncelle(Sistem, i)
+            if hasattr(self.myTrader, 'SistemYonListesiniGuncelle'):
+                self.myTrader.SistemYonListesiniGuncelle(sistem, i)
+            
+            # myTrader.SistemSeviyeListesiniGuncelle(Sistem, i)
+            if hasattr(self.myTrader, 'SistemSeviyeListesiniGuncelle'):
+                self.myTrader.SistemSeviyeListesiniGuncelle(sistem, i)
+            
+            # myTrader.SinyalListesiniGuncelle(Sistem, i)
+            if hasattr(self.myTrader, 'SinyalListesiniGuncelle'):
+                self.myTrader.SinyalListesiniGuncelle(sistem, i)
+            
+            # myTrader.IslemListesiniGuncelle(Sistem, i)
+            if hasattr(self.myTrader, 'IslemListesiniGuncelle'):
+                self.myTrader.IslemListesiniGuncelle(sistem, i)
+            
+            # myTrader.KomisyonListesiniGuncelle(Sistem, i)
+            if hasattr(self.myTrader, 'KomisyonListesiniGuncelle'):
+                self.myTrader.KomisyonListesiniGuncelle(sistem, i)
+            
+            # myTrader.BakiyeListesiniGuncelle(Sistem, i)
+            if hasattr(self.myTrader, 'BakiyeListesiniGuncelle'):
+                self.myTrader.BakiyeListesiniGuncelle(sistem, i)
+            
+            # myTrader.DonguSonuDegiskenleriSetle(Sistem, i)
+            if hasattr(self.myTrader, 'DonguSonuDegiskenleriSetle'):
+                self.myTrader.DonguSonuDegiskenleriSetle(sistem, i)
     
-    def Stop(self):
-        """Stop trading system"""
+    def Stop(self, sistem=None):
+        """Stop trading system - Python equivalent of C# Stop method"""
+        # myTrader.Stop(Sistem)
+        if hasattr(self, 'myTrader') and self.myTrader:
+            if hasattr(self.myTrader, 'Stop'):
+                self.myTrader.Stop(sistem)
+        
+        # myTimeUtils.StopTimer(Sistem)
+        if hasattr(self, 'myTimeUtils') and self.myTimeUtils:
+            if hasattr(self.myTimeUtils, 'StopTimer'):
+                self.myTimeUtils.StopTimer(sistem)
+            elif hasattr(self.myTimeUtils, 'stop_timing'):
+                self.myTimeUtils.stop_timing()
+        
         print("Trading system stopped.")
     
-    def HesaplamalariYap(self):
-        """Perform calculations"""
+    def HesaplamalariYap(self, sistem=None):
+        """Perform calculations - Python equivalent of C# HesaplamalariYap"""
         def _impl():
+            # if (bIdealGetiriHesapla) myTrader.IdealGetiriHesapla(Sistem);
+            if hasattr(self, 'bIdealGetiriHesapla') and self.bIdealGetiriHesapla:
+                if hasattr(self, 'myTrader') and self.myTrader:
+                    if hasattr(self.myTrader, 'IdealGetiriHesapla'):
+                        self.myTrader.IdealGetiriHesapla(sistem)
+            
+            # if (bIstatistikleriHesapla) myTrader.IstatistikleriHesapla(Sistem);
+            if hasattr(self, 'bIstatistikleriHesapla') and self.bIstatistikleriHesapla:
+                if hasattr(self, 'myTrader') and self.myTrader:
+                    if hasattr(self.myTrader, 'IstatistikleriHesapla'):
+                        self.myTrader.IstatistikleriHesapla(sistem)
+            
             print("Performing final calculations...")
         
         return self._timeit("HesaplamalariYap", _impl)
@@ -569,14 +762,23 @@ class SystemWrapper(CBase):
         print("=== TRADING RESULTS ===")
         print(f"Final position: {self.trader.position}")
     
-    def SonuclariDosyayaYaz(self):
-        """Write results to file"""
+    def SonuclariDosyayaYaz(self, sistem=None):
+        """Write results to file - Python equivalent of C# SonuclariDosyayaYaz"""
         def _impl():
-            with open("trading_results.txt", "w", encoding="utf-8") as f:
-                f.write("=== TRADING RESULTS ===\n")
-                f.write(f"Final position: {self.trader.position}\n")
-                f.write(f"Total bars processed: {len(self.Open) if hasattr(self, 'Open') and self.Open is not None else 'N/A'}\n")
-            print("Results written to trading_results.txt")
+            # if (bIstatistikleriDosyayaYaz) myTrader.IstatistikleriDosyayaYaz(Sistem, IstatistiklerOutputFileName);
+            if hasattr(self, 'bIstatistikleriDosyayaYaz') and self.bIstatistikleriDosyayaYaz:
+                if hasattr(self, 'myTrader') and self.myTrader:
+                    if hasattr(self.myTrader, 'IstatistikleriDosyayaYaz'):
+                        output_filename = getattr(self, 'IstatistiklerOutputFileName', "Aykut/Exports/Istatistikler.csv")
+                        self.myTrader.IstatistikleriDosyayaYaz(sistem, output_filename)
+            
+            # Fallback: write basic results to file if flag is True or method doesn't exist
+            if (hasattr(self, 'bIstatistikleriDosyayaYaz') and self.bIstatistikleriDosyayaYaz) or not hasattr(self, 'bIstatistikleriDosyayaYaz'):
+                with open("trading_results.txt", "w", encoding="utf-8") as f:
+                    f.write("=== TRADING RESULTS ===\n")
+                    f.write(f"Final position: {self.trader.position}\n")
+                    f.write(f"Total bars processed: {len(self.Open) if hasattr(self, 'Open') and self.Open is not None else 'N/A'}\n")
+                print("Results written to trading_results.txt")
         
         return self._timeit("SonuclariDosyayaYaz", _impl)
     

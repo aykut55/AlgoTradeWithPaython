@@ -284,6 +284,14 @@ class CTimeUtils(CBase):
         self.start_time_tick = int(time.time() * 1000)  # Milliseconds
         return self
     
+    def StartTimer(self, sistem=None) -> 'CTimeUtils':
+        """Start timer - Python equivalent of C# StartTimer method."""
+        return self.start_timing()
+    
+    def StopTimer(self, sistem=None) -> 'CTimeUtils':
+        """Stop timer - Python equivalent of C# StopTimer method."""
+        return self.stop_timing()
+    
     def stop_timing(self) -> 'CTimeUtils':
         """Stop execution timing and calculate elapsed time."""
         self.stop_time_tick = int(time.time() * 1000)

@@ -9,6 +9,20 @@ from src.trading.signals import CSignals
 from src.system.system_wrapper import SystemWrapper
 from src.utils.utils import CUtils
 from src.indicators.indicator_manager import CIndicatorManager
+from src.data_plotter.data_plotter import DataPlotter
+
+def create_level_series(bar_count: int, level_value: float) -> np.ndarray:
+    """
+    Create a constant level series for the given number of bars.
+
+    Args:
+        bar_count: Total number of bars
+        level_value: Constant value to set for all bars
+
+    Returns:
+        numpy array filled with the level value
+    """
+    return np.full(bar_count, level_value, dtype=float)
 
 # Main execution starts here
 # --------------------------------------------------------------
@@ -17,8 +31,9 @@ print("Loading market data...")
 
 dataManager = DataManager()
 
-dataManager.set_read_mode_last_n(1000)  # Son 2000 satırı okumaya ayarla
-dataManager.load_prices_from_csv("data", "01", "BTCUSD.csv")
+dataManager.create_data(600)
+# dataManager.set_read_mode_last_n(1000)  # Son 2000 satırı okumaya ayarla
+# dataManager.load_prices_from_csv("data", "01", "BTCUSD.csv")
 
 Df         = dataManager.get_dataframe()
 Time       = dataManager.get_epoch_time_array()
@@ -82,6 +97,9 @@ MA2 = myIndicators.calculate_ma(None, Close, Yontem, Periyot2)
 # Calculate RSI
 Rsi = myIndicators.calculate_rsi(None, Close, 14)
 
+# Create level series
+Level = create_level_series(BarCount, 5000)
+
 # --------------------------------------------------------------
 # Set trading time filters
 DateTimes = ["25.05.2025 14:30:00", "02.06.2025 14:00:00"]
@@ -122,14 +140,17 @@ for i in range(BarCount):
     if i < 1:
         continue
     
-    # Generate trading signals based on MA crossover
-    Al = myUtils.yukari_kesti(None, i, MA1, MA2)
-    Sat = myUtils.asagi_kesti(None, i, MA1, MA2)
-    
-    # Additional RSI-based signals
-    rsi_50_line = np.full(len(Rsi), 50.0)
-    Al = Al or myUtils.yukari_kesti(None, i, Rsi, rsi_50_line)
-    Sat = Sat or myUtils.asagi_kesti(None, i, Rsi, rsi_50_line)
+    # # Generate trading signals based on MA crossover
+    # Al = myUtils.yukari_kesti(None, i, MA1, MA2)
+    # Sat = myUtils.asagi_kesti(None, i, MA1, MA2)
+    #
+    # # Additional RSI-based signals
+    # rsi_50_line = np.full(len(Rsi), 50.0)
+    # Al = Al or myUtils.yukari_kesti(None, i, Rsi, rsi_50_line)
+    # Sat = Sat or myUtils.asagi_kesti(None, i, Rsi, rsi_50_line)
+
+    Al = myUtils.yukari_kesti(None, i, Close, Level)
+    Sat = myUtils.asagi_kesti(None, i, Close, Level)
     
     # Calculate take profit and stop loss
     KarAl = mySystem.GetTrader().KarAlZararKes.SonFiyataGoreKarAlSeviyeHesapla(i, 5, 50, 1000) != 0
@@ -163,6 +184,46 @@ mySystem.Stop(None)
 mySystem.HesaplamalariYap(None)
 mySystem.SonuclariEkrandaGoster()
 mySystem.SonuclariDosyayaYaz(None)
+
+# --------------------------------------------------------------
+dataPlotter = DataPlotter()
+
+dataPlotter.plot_series(
+    timestamps=Time,
+    series_data={
+        'Close Price': Close,
+        'Level': Level
+    },
+    title="Trading Analysis - Price with Level"
+)
+dataPlotter.show()
+
+# dataPlotter.plot_series(
+#     timestamps=Time,
+#     series_data={
+#         'Close Price': Close,
+#         'MA 20': MA1,
+#         'MA 50': MA2,
+#         'Support Level': 45000,
+#         'Resistance Level': 55000
+#     },
+#     title="Trading Analysis - Price with Moving Averages"
+# )
+# dataPlotter.show()
+#
+# # Plot RSI separately
+# dataPlotter.plot_series(
+#     timestamps=Time,
+#     series_data={
+#         'RSI': Rsi,
+#         'Overbought': 70,
+#         'Oversold': 30,
+#         'Midline': 50
+#     },
+#     title="RSI Analysis",
+#     ylabel="RSI Value"
+# )
+# dataPlotter.show()
 
 # --------------------------------------------------------------
 # Show timing reports

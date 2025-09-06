@@ -375,3 +375,95 @@ class DataManager:
 
     def get_bar_count(self):
         return self._bar_count
+    
+    # --------------------------------------------------------
+    # Synthetic data creation
+    def create_data(self, n_bars: int):
+        """
+        Create synthetic OHLCV data based on sine wave pattern.
+        
+        Args:
+            n_bars: Number of bars to generate
+        """
+        def _impl():
+            import math
+            import random
+            from datetime import datetime, timedelta
+            
+            self.clear_dataframe()
+            
+            # Set random seed for reproducible results
+            random.seed(42)
+            np.random.seed(42)
+            
+            # Generate timestamps - current time going backwards n_bars
+            current_timestamp = int(datetime.now().timestamp())
+            timestamps = [current_timestamp - (i * 3600) for i in range(n_bars)]  # 1 hour intervals
+            timestamps.reverse()  # Make it chronological order
+            
+            # Generate sine-based close prices
+            base_price = 5000  # Starting around 50,000
+            amplitude = 1000   # Price variation amplitude
+            close_prices = []
+            
+            for i in range(n_bars):
+                # Sine wave with some noise
+                sine_value = math.sin(i * 0.1)  # 0.1 controls frequency
+                noise = random.uniform(-0.2, 0.2)  # Random noise
+                price = base_price + (amplitude * sine_value) + (amplitude * noise * 0.1)
+                close_prices.append(max(100, price))  # Ensure minimum price of 100
+            
+            # Generate OHLC data based on close prices
+            ohlcv_data = []
+            for i, close_price in enumerate(close_prices):
+                # Generate realistic OHLC based on close
+                volatility = random.uniform(0.005, 0.02)  # 0.5% to 2% volatility
+                
+                # High: close + random amount up to volatility
+                high = close_price * (1 + random.uniform(0, volatility))
+                
+                # Low: close - random amount up to volatility  
+                low = close_price * (1 - random.uniform(0, volatility))
+                
+                # Open: somewhere between high and low, closer to previous close
+                if i > 0:
+                    prev_close = close_prices[i-1]
+                    open_price = prev_close + random.uniform(-volatility/2, volatility/2) * prev_close
+                    open_price = max(low, min(high, open_price))  # Ensure within high/low range
+                else:
+                    open_price = close_price * (1 + random.uniform(-volatility/2, volatility/2))
+                
+                # Ensure OHLC relationships are valid
+                high = max(high, open_price, close_price)
+                low = min(low, open_price, close_price)
+                
+                # Generate volume (random but realistic)
+                base_volume = random.uniform(1000, 10000)
+                volume = base_volume * random.uniform(0.5, 2.0)
+                
+                # Generate lot (usually smaller than volume)
+                lot = volume * random.uniform(0.1, 0.3)
+                
+                ohlcv_data.append({
+                    self._timestamp_col: timestamps[i],
+                    self._open_col: round(open_price, 2),
+                    self._high_col: round(high, 2), 
+                    self._low_col: round(low, 2),
+                    self._close_col: round(close_price, 2),
+                    self._volume_col: round(volume, 2),
+                    self._lot_col: round(lot, 2)
+                })
+            
+            # Create DataFrame
+            self._df = pd.DataFrame(ohlcv_data)
+            
+            # Set the same attributes that load_prices_from_csv sets
+            self._last_filename = f"synthetic_data_{n_bars}_bars.csv"
+            self._last_filesize = len(str(self._df))  # Approximate size
+            self._bar_count = n_bars
+            
+            print(f"Generated synthetic data: {n_bars} bars")
+            print(f"Price range: {self._df[self._close_col].min():.2f} - {self._df[self._close_col].max():.2f}")
+            print(f"Time range: {datetime.fromtimestamp(timestamps[0])} to {datetime.fromtimestamp(timestamps[-1])}")
+        
+        return self._timeit("create_data", _impl)

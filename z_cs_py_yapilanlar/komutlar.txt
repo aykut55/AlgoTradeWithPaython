@@ -1,0 +1,12 @@
+  "bu dizindeki lib.cs dosyasını okumanı istiyorum. Bu c# kodu ve bu lib.cs deki tüm classları aynı dizindeki seperatedClass folderi içine .cs uzantılı olarak kaydedtmeni istiyorum. En sonunda senin bana tabo göstermen lazım. Tabloda lib.cs deki tüm
+  classlar ve her class'ın tüm methodları sıralanacak. karsılarında da yapıldı yapılmadı diye not konulacak."
+
+
+
+│ > bu dizindeki cs uzantılı dosyaları okuyup oradaki clasların python karşılıklarını yazacaksın.          │
+│   Nasıl olduğunu anlaman için sana, senin yazdığın CBakiye.cs -> CBakiye.py cevrimine bakmanı            │
+│   istiyorum. Clasların tüm methodları ve definitonları cs dosyasındaki ile aynı sırada olacak.           │
+│   Birebir python karsılıklarını yazacaksın. Şayet cs uzantılı dosyada bir class içinde class varsa       │
+│   ilerleyen adımlarda zaten onu da yapmıs olacaksın.o yüzden rastladığın her class ı da hemen            │
+│   cevirmeye kalkma. progresi @status.md dosyasında tutuyordun. Yaptıkca orayı da güncelle.               │
+│   @main.cs dosyasına gelince bana sor. Orada sana açıklama yapacağım. Haydi başla.   
